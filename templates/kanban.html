@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Statistics</title>
+  <style>
+    :root {
+      --primary-color: #6366f1;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #6b7280;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background-color: var(--background);
+      color: var(--text-primary);
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    h1 {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+      text-align: center;
+      position: relative;
+    }
+    h1::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 4px;
+      background: var(--primary-color);
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      border-radius: 2px;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 20px;
+    }
+    .action-btn {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    #task-status {
+      display: none;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .charts-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .chart-box {
+      flex: 1;
+      min-width: 300px;
+      height: 400px;
+    }
+  </style>
+  <!-- 引入 Highcharts -->
+  <script src="http://code.highcharts.com/highcharts.js"></script>
+  <!-- Socket.IO 客户端 -->
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>API Statistics</h1>
+    <div class="controls">
+      <a href="/stats" id="stats-btn" class="action-btn">Statistics</a>
+      <button id="refresh-btn" class="action-btn">Refresh</button>
+      <span id="task-status">Refreshing data, please wait...</span>
+    </div>
+    <div class="charts-container">
+      <!-- 左侧图表：各 Model 随时间变化的 Req+TTFT -->
+      <div id="chart-req" class="chart-box"></div>
+      <!-- 右侧图表：各 Model 随时间变化的 TPOT (Token/s) -->
+      <div id="chart-speed" class="chart-box"></div>
+    </div>
+  </div>
+
+  <script>
+    // 将 "YYYY-MM-DD HH:MM:SS" 格式转换为 ISO 格式，以便构造 Date 对象
+    function parseTimestamp(ts) {
+      return new Date(ts.replace(' ', 'T')).getTime();
+    }
+
+    // 获取后端返回的数据（接口 /result 返回类似以下 JSON 数据）
+    // [{"_id":"...","client_id":4,"model_name":"claude-3-5-sonnet-20241022","req_ttft":0, ...,"speed":28.59,"timestamp":"2025-02-19 15:56:11"}, ...]
+    fetch('/result')
+      .then(response => response.json())
+      .then(data => {
+        let seriesReq = {};    // 用于 Req+TTFT 的数据分组
+        let seriesSpeed = {};  // 用于 TPOT 的数据分组
+
+        data.forEach(record => {
+          let time = parseTimestamp(record.timestamp);
+          let model = record.model_name;
+          if (!seriesReq[model]) {
+            seriesReq[model] = [];
+          }
+          if (!seriesSpeed[model]) {
+            seriesSpeed[model] = [];
+          }
+          seriesReq[model].push([time, record.req_ttft]);
+          seriesSpeed[model].push([time, record.speed]);
+        });
+
+        // 将分组数据转换为 Highcharts 所需的 series 数组，并按时间排序
+        let reqSeries = [];
+        for (let model in seriesReq) {
+          seriesReq[model].sort((a, b) => a[0] - b[0]);
+          reqSeries.push({
+            name: model,
+            data: seriesReq[model]
+          });
+        }
+        let speedSeries = [];
+        for (let model in seriesSpeed) {
+          seriesSpeed[model].sort((a, b) => a[0] - b[0]);
+          speedSeries.push({
+            name: model,
+            data: seriesSpeed[model]
+          });
+        }
+
+        // 使用 Highcharts 绘制 Req+TTFT 图表
+        Highcharts.chart('chart-req', {
+          chart: {
+            type: 'line'
+          },
+          title: {
+            text: 'Req+TTFT over Time'
+          },
+          xAxis: {
+            type: 'datetime',
+            title: {
+              text: 'Time'
+            }
+          },
+          yAxis: {
+            title: {
+              text: 'Req+TTFT (s)'
+            }
+          },
+          tooltip: {
+            xDateFormat: '%Y-%m-%d %H:%M:%S',
+            shared: true
+          },
+          series: reqSeries
+        });
+
+        // 使用 Highcharts 绘制 TPOT（Token/s）图表
+        Highcharts.chart('chart-speed', {
+          chart: {
+            type: 'line'
+          },
+          title: {
+            text: 'TPOT (Token/s) over Time'
+          },
+          xAxis: {
+            type: 'datetime',
+            title: {
+              text: 'Time'
+            }
+          },
+          yAxis: {
+            title: {
+              text: 'Tokens Per Second'
+            }
+          },
+          tooltip: {
+            xDateFormat: '%Y-%m-%d %H:%M:%S',
+            shared: true
+          },
+          series: speedSeries
+        });
+      })
+      .catch(error => {
+        console.error("Error fetching data:", error);
+      });
+
+    // 刷新按钮功能：调用后端 /refresh 接口，成功后刷新页面
+    document.getElementById('refresh-btn').addEventListener('click', function () {
+      const taskStatus = document.getElementById('task-status');
+      taskStatus.style.display = 'inline';
+      taskStatus.textContent = 'Refreshing data, please wait...';
+
+      fetch('/refresh')
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            taskStatus.textContent = 'Refresh complete, reloading page...';
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else {
+            taskStatus.textContent = 'Refresh failed, please try again.';
+          }
+        })
+        .catch(error => {
+          console.error("Error refreshing data:", error);
+          taskStatus.textContent = 'Error occurred during refresh.';
+        });
+    });
+
+    // 可选：使用 Socket.IO 实现自动刷新（若后端推送刷新事件）
+    var socket = io();
+    socket.on('refresh_stats', function (data) {
+      console.log('Received refresh event:', data);
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

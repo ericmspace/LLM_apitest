@@ -106,8 +106,14 @@
             width: 40px;
             height: 40px;
         }
-        #refresh-btn {
+        /* New styles for button group and action buttons */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             margin-bottom: 20px;
+        }
+        .action-btn {
             background-color: var(--primary-color);
             color: white;
             padding: 0.75rem 1.5rem;
@@ -115,12 +121,12 @@
             border-radius: 8px;
             font-size: 1rem;
             cursor: pointer;
+            text-decoration: none;
         }
         #task-status {
             display: none;
             font-size: 0.875rem;
             color: var(--text-secondary);
-            margin-left: 1rem;
         }
         #provider-search, #model-search {
             border: 1px solid #d1d5db;
@@ -129,180 +135,180 @@
             margin-right: 1rem;
         }
     </style>
-    <!-- 添加 Socket.IO 客户端库 -->
+    <!-- Socket.IO client library -->
     <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
 </head>
 <body>
-<div class="container">
-    <h1>API Statistics</h1>
+    <div class="container">
+        <h1>API Statistics</h1>
 
-    <!-- 搜索框 -->
-    <div style="margin-bottom: 20px;">
-        <input type="text" id="provider-search" placeholder="Search Provider">
-        <input type="text" id="model-search" placeholder="Search Model Name">
+        <!-- Search inputs -->
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="provider-search" placeholder="Search Provider">
+            <input type="text" id="model-search" placeholder="Search Model Name">
+        </div>
+
+        <!-- Buttons and status -->
+        <div class="controls">
+            <button id="refresh-btn" class="action-btn">Refresh</button>
+            <span id="task-status">Task submitted, will refresh automatically...</span>
+            <a href="/kanban" id="kanban-btn" class="action-btn">Kanban</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th data-sort="provider">Provider</th>
+                    <th data-sort="model">Model Name</th>
+                    <th data-sort="availability">Availability</th>
+                    <th data-sort="speed">TPOT(token/s)</th>
+                    <th data-sort="response">Latest Response(s)</th>
+                    <th data-sort="last_updated">Last Updated</th>
+                    <th data-sort="req_ttft">Req+TTFT(s)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in statistics %}
+                <tr>
+                    <td>
+                        {% if stat.client_id == 0 %}Azure
+                        {% elif stat.client_id == 1 %}OpenAI
+                        {% elif stat.client_id == 2 %}OpenRouter
+                        {% elif stat.client_id == 3 %}Dreamily
+                        {% elif stat.client_id == 4 %}Anthropic
+                        {% elif stat.client_id == 5 %}Deepseek
+                        {% elif stat.client_id == 6 %}VolcEngine
+                        {% elif stat.client_id == 7 %}Kimi
+                        {% elif stat.client_id == 8 %}Siflow
+                        {% elif stat.client_id == 9 %}ChatGLM
+                        {% else %}Unknown{% endif %}
+                    </td>
+                    <td>{{ stat.model_name }}</td>
+                    <td><span class="availability" data-value="{{ stat.availability }}">{{ stat.availability }}</span></td>
+                    <td>{{ stat.speed }}</td>
+                    <td>{{ stat.response }}</td>
+                    <td>{{ stat.last_updated }}</td>
+                    <td>{{ stat.req_ttft }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- 刷新按钮 -->
-    <button id="refresh-btn">Refresh</button>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const providerSearch = document.getElementById('provider-search');
+            const modelSearch = document.getElementById('model-search');
+            const table = document.querySelector('table tbody');
+            const rows = table.querySelectorAll('tr');
+            const headers = document.querySelectorAll('th[data-sort]');
+            let sortDirection = {};
 
-    <!-- 任务状态提示 -->
-    <span id="task-status">Task submitted, will refresh automatically...</span>
+            // Search functionality
+            function filterTable() {
+                const providerValue = providerSearch.value.toLowerCase();
+                const modelValue = modelSearch.value.toLowerCase();
 
-    <table>
-        <thead>
-            <tr>
-                <th data-sort="provider">Provider</th>
-                <th data-sort="model">Model Name</th>
-                <th data-sort="availability">Availability</th>
-                <th data-sort="speed">TPOT(token/s)</th>
-                <th data-sort="response">Latest Response(s)</th>
-                <th data-sort="last_updated">Last Updated</th>
-                <th data-sort="req_ttft">Req+TTFT(s)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in statistics %}
-            <tr>
-                <td>
-                    {% if stat.client_id == 0 %}Azure
-                    {% elif stat.client_id == 1 %}OpenAI
-                    {% elif stat.client_id == 2 %}OpenRouter
-                    {% elif stat.client_id == 3 %}Dreamily
-                    {% elif stat.client_id == 4 %}Anthropic
-                    {% elif stat.client_id == 5 %}Deepseek
-                    {% elif stat.client_id == 6 %}VolcEngine
-                    {% elif stat.client_id == 7 %}Kimi
-                    {% elif stat.client_id == 8 %}Siflow
-                    {% elif stat.client_id == 9 %}ChatGLM
-                    {% else %}Unknown{% endif %}
-                </td>
-                <td>{{ stat.model_name }}</td>
-                <td><span class="availability" data-value="{{ stat.availability }}">{{ stat.availability }}</span></td>
-                <td>{{ stat.speed }}</td>
-                <td>{{ stat.response }}</td>
-                <td>{{ stat.last_updated }}</td>
-                <td>{{ stat.req_ttft }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                rows.forEach(row => {
+                    const providerCell = row.cells[0].textContent.toLowerCase();
+                    const modelCell = row.cells[1].textContent.toLowerCase();
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const providerSearch = document.getElementById('provider-search');
-    const modelSearch = document.getElementById('model-search');
-    const table = document.querySelector('table tbody');
-    const rows = table.querySelectorAll('tr');
-    const headers = document.querySelectorAll('th[data-sort]');
-    let sortDirection = {};
+                    const providerMatch = providerCell.includes(providerValue);
+                    const modelMatch = modelCell.includes(modelValue);
 
-    // 搜索功能
-    function filterTable() {
-        const providerValue = providerSearch.value.toLowerCase();
-        const modelValue = modelSearch.value.toLowerCase();
-
-        rows.forEach(row => {
-            const providerCell = row.cells[0].textContent.toLowerCase();
-            const modelCell = row.cells[1].textContent.toLowerCase();
-
-            const providerMatch = providerCell.includes(providerValue);
-            const modelMatch = modelCell.includes(modelValue);
-
-            row.style.display = (providerMatch && modelMatch) ? '' : 'none';
-        });
-    }
-
-    providerSearch.addEventListener('input', filterTable);
-    modelSearch.addEventListener('input', filterTable);
-
-    // 排序功能
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const sortKey = header.getAttribute('data-sort');
-            const isAscending = !sortDirection[sortKey] || sortDirection[sortKey] === 'desc';
-            sortDirection[sortKey] = isAscending ? 'asc' : 'desc';
-            sortTable(sortKey, isAscending);
-        });
-    });
-
-    function sortTable(key, ascending) {
-        const tbody = document.querySelector('table tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
-
-        rows.sort((a, b) => {
-            let aValue = a.cells[getColumnIndex(key) - 1].textContent.trim();
-            let bValue = b.cells[getColumnIndex(key) - 1].textContent.trim();
-
-            if (key === 'availability') {
-                if (aValue === 'unknown') return 1;
-                if (bValue === 'unknown') return -1;
-                aValue = parseFloat(aValue);
-                bValue = parseFloat(bValue);
-            } else if (key === 'speed' || key === 'response' || key === 'req_ttft') {
-                aValue = parseFloat(aValue) || 0;
-                bValue = parseFloat(bValue) || 0;
-            } else if (key === 'last_updated') {
-                aValue = new Date(aValue);
-                bValue = new Date(bValue);
-            } else {
-                aValue = aValue.toLowerCase();
-                bValue = bValue.toLowerCase();
+                    row.style.display = (providerMatch && modelMatch) ? '' : 'none';
+                });
             }
 
-            if (aValue < bValue) return ascending ? -1 : 1;
-            if (aValue > bValue) return ascending ? 1 : -1;
-            return 0;
-        });
+            providerSearch.addEventListener('input', filterTable);
+            modelSearch.addEventListener('input', filterTable);
 
-        rows.forEach(row => tbody.appendChild(row));
-    }
+            // Sorting functionality
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.getAttribute('data-sort');
+                    const isAscending = !sortDirection[sortKey] || sortDirection[sortKey] === 'desc';
+                    sortDirection[sortKey] = isAscending ? 'asc' : 'desc';
+                    sortTable(sortKey, isAscending);
+                });
+            });
 
-    function getColumnIndex(key) {
-        const mapping = {
-            'provider': 1,
-            'model': 2,
-            'availability': 3,
-            'speed': 4,
-            'response': 5,
-            'last_updated': 6,
-            'req_ttft': 7
-        };
-        return mapping[key] || 0;
-    }
-});
+            function sortTable(key, ascending) {
+                const tbody = document.querySelector('table tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
 
-// 刷新按钮功能
-document.getElementById('refresh-btn').addEventListener('click', function() {
-    const taskStatus = document.getElementById('task-status');
-    taskStatus.style.display = 'inline';
-    taskStatus.textContent = '正在刷新数据，请稍候...';
+                rows.sort((a, b) => {
+                    let aValue = a.cells[getColumnIndex(key) - 1].textContent.trim();
+                    let bValue = b.cells[getColumnIndex(key) - 1].textContent.trim();
 
-    fetch('/refresh')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "success") {
-                taskStatus.textContent = '刷新完成，即将加载最新数据';
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                taskStatus.textContent = '刷新失败，请重试。';
+                    if (key === 'availability') {
+                        if (aValue === 'unknown') return 1;
+                        if (bValue === 'unknown') return -1;
+                        aValue = parseFloat(aValue);
+                        bValue = parseFloat(bValue);
+                    } else if (key === 'speed' || key === 'response' || key === 'req_ttft') {
+                        aValue = parseFloat(aValue) || 0;
+                        bValue = parseFloat(bValue) || 0;
+                    } else if (key === 'last_updated') {
+                        aValue = new Date(aValue);
+                        bValue = new Date(bValue);
+                    } else {
+                        aValue = aValue.toLowerCase();
+                        bValue = bValue.toLowerCase();
+                    }
+
+                    if (aValue < bValue) return ascending ? -1 : 1;
+                    if (aValue > bValue) return ascending ? 1 : -1;
+                    return 0;
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
             }
-        })
-        .catch(error => {
-            console.error("Error refreshing data:", error);
-            taskStatus.textContent = '刷新出现错误，请重试。';
-        });
-});
 
-// 新增：通过 Socket.IO 监听后端的刷新事件
-var socket = io();
-socket.on('refresh_stats', function(data) {
-    console.log('Received refresh event:', data);
-    // 自动刷新页面
-    window.location.reload();
-});
-</script>
+            function getColumnIndex(key) {
+                const mapping = {
+                    'provider': 1,
+                    'model': 2,
+                    'availability': 3,
+                    'speed': 4,
+                    'response': 5,
+                    'last_updated': 6,
+                    'req_ttft': 7
+                };
+                return mapping[key] || 0;
+            }
+        });
+
+        // Refresh button functionality
+        document.getElementById('refresh-btn').addEventListener('click', function() {
+            const taskStatus = document.getElementById('task-status');
+            taskStatus.style.display = 'inline';
+            taskStatus.textContent = '正在刷新数据，请稍候...';
+
+            fetch('/refresh')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        taskStatus.textContent = '刷新完成，即将加载最新数据';
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        taskStatus.textContent = '刷新失败，请重试。';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error refreshing data:", error);
+                    taskStatus.textContent = '刷新出现错误，请重试。';
+                });
+        });
+
+        // Socket.IO for automatic refresh
+        var socket = io();
+        socket.on('refresh_stats', function(data) {
+            console.log('Received refresh event:', data);
+            window.location.reload();
+        });
+    </script>
 </body>
 </html>

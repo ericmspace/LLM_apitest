@@ -296,7 +296,15 @@ def show_stats():
     for entry in all_statistics:
         entry['_id'] = str(entry['_id'])  # 转换 ObjectId 为字符串
     return render_template('api_statistics.html', statistics=all_statistics)
-
+@app.route('/kanban')
+def show_kanban():
+    # 从MongoDB的api_status集合中获取所有数据
+    all_data = list(collection.find())
+    # 将每条记录中的 ObjectId 转换为字符串
+    for entry in all_data:
+        entry['_id'] = str(entry['_id'])
+    # 渲染kanban.html模板并传递数据
+    return render_template('kanban.html', data=all_data)
 @app.route('/refresh')
 def refresh():
     # 启动任务，执行 initial_check 和 calculate_availability
