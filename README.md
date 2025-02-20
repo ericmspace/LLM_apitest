@@ -98,6 +98,9 @@ Once the Flask app is running, you can access the statistics and results by navi
 
 - Result: `http://localhost:9500/result`  
   结果：`http://localhost:9500/result`
+  
+- Kanban: `http://localhost:9500/kanban`  
+  看板：`http://localhost:9500/kanban`
 
 You can also refresh the data by clicking the Refresh button in the web interface.  
 您还可以通过点击 Web 界面中的 刷新 按钮来手动刷新数据。
