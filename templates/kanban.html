@@ -49,7 +49,7 @@
     .controls {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 1rem;
       margin-bottom: 20px;
     }
@@ -80,16 +80,16 @@
     }
   </style>
   <!-- 引入 Highcharts -->
-  <script src="http://code.highcharts.com/highcharts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highcharts@12.1.2/highcharts.js"></script>
   <!-- Socket.IO 客户端 -->
-  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>API Statistics</h1>
     <div class="controls">
-      <a href="/stats" id="stats-btn" class="action-btn">Statistics</a>
       <button id="refresh-btn" class="action-btn">Refresh</button>
+      <a href="/stats" id="stats-btn" class="action-btn">Statistics</a>
       <span id="task-status">Refreshing data, please wait...</span>
     </div>
     <div class="charts-container">
