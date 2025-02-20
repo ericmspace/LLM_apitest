@@ -134,6 +134,15 @@
             padding: 0.5rem;
             margin-right: 1rem;
         }
+        footer {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-secondary);
+    }
+    footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
     </style>
     <!-- Socket.IO client library -->
     <script src="https://cdn.socket.io/4.8.1/socket.io.js"></script>
@@ -194,7 +203,9 @@
             </tbody>
         </table>
     </div>
-
+    <footer>
+        Powered by <a href="https://github.com/ericmspace/apitest" target="_blank">CaiyunApitest</a>
+      </footer>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const providerSearch = document.getElementById('provider-search');
