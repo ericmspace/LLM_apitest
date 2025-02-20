@@ -18,6 +18,9 @@
       padding: 2rem;
       background-color: var(--background);
       color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
     .container {
       max-width: 1200px;
@@ -26,6 +29,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       padding: 2rem;
+      flex: 1;
     }
     h1 {
       font-weight: 600;
@@ -78,6 +82,15 @@
       min-width: 300px;
       height: 400px;
     }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-secondary);
+    }
+    footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
   </style>
   <!-- 引入 Highcharts -->
   <script src="https://cdn.jsdelivr.net/npm/highcharts@12.1.2/highcharts.js"></script>
@@ -93,12 +106,18 @@
       <span id="task-status">Refreshing data, please wait...</span>
     </div>
     <div class="charts-container">
-      <!-- 左侧图表：各 Model 随时间变化的 Req+TTFT -->
+      <!-- 第一行：Req+TTFT 图和 TPOT 图 -->
       <div id="chart-req" class="chart-box"></div>
-      <!-- 右侧图表：各 Model 随时间变化的 TPOT (Token/s) -->
       <div id="chart-speed" class="chart-box"></div>
+      <!-- 第二行：Response Time 图和 Availability 图 -->
+      <div id="chart-response-time" class="chart-box"></div>
+      <div id="chart-availability" class="chart-box"></div>
     </div>
   </div>
+
+  <footer>
+    Powered by <a href="https://github.com/ericmspace/apitest" target="_blank">CaiyunApitest</a>
+  </footer>
 
   <script>
     // 将 "YYYY-MM-DD HH:MM:SS" 格式转换为 ISO 格式，以便构造 Date 对象
@@ -106,28 +125,47 @@
       return new Date(ts.replace(' ', 'T')).getTime();
     }
 
-    // 获取后端返回的数据（接口 /result 返回类似以下 JSON 数据）
-    // [{"_id":"...","client_id":4,"model_name":"claude-3-5-sonnet-20241022","req_ttft":0, ...,"speed":28.59,"timestamp":"2025-02-19 15:56:11"}, ...]
+    // 定义 Availability 图使用的类别顺序
+    const availabilityCategories = ["smooth", "available", "congestion", "lagging", "unknown"];
+
+    // 获取后端返回的数据，示例数据结构：
+    // {"_id":"...","client_id":2,"model_name":"microsoft/phi-3-medium-128k-instruct:free",
+    //  "req_ttft":1.36,"response_time":20.82,"result":"available","speed":50.57,"timestamp":"2025-02-19 16:44:46"}
     fetch('/result')
       .then(response => response.json())
       .then(data => {
-        let seriesReq = {};    // 用于 Req+TTFT 的数据分组
-        let seriesSpeed = {};  // 用于 TPOT 的数据分组
+        // 计算数据中的最大时间，并定义最近 8 小时的时间范围
+        let times = data.map(record => parseTimestamp(record.timestamp));
+        let maxTime = Math.max(...times);
+        let minTime = maxTime - 8 * 3600 * 1000; // 最近8小时
 
-        data.forEach(record => {
+        // 仅保留时间在最近8小时内的记录
+        let filteredData = data.filter(record => parseTimestamp(record.timestamp) >= minTime);
+
+        // 按模型分组数据，分别构造 Req+TTFT、TPOT、Response Time 和 Availability 数据
+        let seriesReq = {};
+        let seriesSpeed = {};
+        let seriesResponse = {};
+        let seriesAvailability = {};
+        filteredData.forEach(record => {
           let time = parseTimestamp(record.timestamp);
           let model = record.model_name;
-          if (!seriesReq[model]) {
-            seriesReq[model] = [];
-          }
-          if (!seriesSpeed[model]) {
-            seriesSpeed[model] = [];
-          }
+          if (!seriesReq[model]) seriesReq[model] = [];
+          if (!seriesSpeed[model]) seriesSpeed[model] = [];
+          if (!seriesResponse[model]) seriesResponse[model] = [];
+          if (!seriesAvailability[model]) seriesAvailability[model] = [];
           seriesReq[model].push([time, record.req_ttft]);
           seriesSpeed[model].push([time, record.speed]);
+          seriesResponse[model].push([time, record.response_time]);
+          // Availability：将 result 转换为对应类别的索引
+          let yValue = availabilityCategories.indexOf(record.result);
+          if (yValue === -1) {
+            yValue = availabilityCategories.indexOf("unknown");
+          }
+          seriesAvailability[model].push([time, yValue]);
         });
 
-        // 将分组数据转换为 Highcharts 所需的 series 数组，并按时间排序
+        // 转换为 Highcharts 所需的 series 数组，并按时间排序
         let reqSeries = [];
         for (let model in seriesReq) {
           seriesReq[model].sort((a, b) => a[0] - b[0]);
@@ -144,25 +182,40 @@
             data: seriesSpeed[model]
           });
         }
+        let responseSeries = [];
+        for (let model in seriesResponse) {
+          seriesResponse[model].sort((a, b) => a[0] - b[0]);
+          responseSeries.push({
+            name: model,
+            data: seriesResponse[model]
+          });
+        }
+        let availabilitySeries = [];
+        for (let model in seriesAvailability) {
+          seriesAvailability[model].sort((a, b) => a[0] - b[0]);
+          availabilitySeries.push({
+            name: model,
+            data: seriesAvailability[model]
+          });
+        }
 
-        // 使用 Highcharts 绘制 Req+TTFT 图表
+        // 绘制 Req+TTFT 图表
         Highcharts.chart('chart-req', {
           chart: {
-            type: 'line'
+            type: 'line',
+            zoomType: 'x'
           },
           title: {
             text: 'Req+TTFT over Time'
           },
           xAxis: {
             type: 'datetime',
-            title: {
-              text: 'Time'
-            }
+            title: { text: 'Time' },
+            min: minTime,
+            max: maxTime
           },
           yAxis: {
-            title: {
-              text: 'Req+TTFT (s)'
-            }
+            title: { text: 'Req+TTFT (s)' }
           },
           tooltip: {
             xDateFormat: '%Y-%m-%d %H:%M:%S',
@@ -171,30 +224,90 @@
           series: reqSeries
         });
 
-        // 使用 Highcharts 绘制 TPOT（Token/s）图表
+        // 绘制 TPOT (Token/s) 图表
         Highcharts.chart('chart-speed', {
           chart: {
-            type: 'line'
+            type: 'line',
+            zoomType: 'x'
           },
           title: {
             text: 'TPOT (Token/s) over Time'
           },
           xAxis: {
             type: 'datetime',
-            title: {
-              text: 'Time'
-            }
+            title: { text: 'Time' },
+            min: minTime,
+            max: maxTime
           },
           yAxis: {
-            title: {
-              text: 'Tokens Per Second'
-            }
+            title: { text: 'Tokens Per Second' }
           },
           tooltip: {
             xDateFormat: '%Y-%m-%d %H:%M:%S',
             shared: true
           },
           series: speedSeries
+        });
+
+        // 绘制 Response Time 图表
+        Highcharts.chart('chart-response-time', {
+          chart: {
+            type: 'line',
+            zoomType: 'x'
+          },
+          title: {
+            text: 'Response Time over Time'
+          },
+          xAxis: {
+            type: 'datetime',
+            title: { text: 'Time' },
+            min: minTime,
+            max: maxTime
+          },
+          yAxis: {
+            title: { text: 'Response Time (s)' }
+          },
+          tooltip: {
+            xDateFormat: '%Y-%m-%d %H:%M:%S',
+            shared: true
+          },
+          series: responseSeries
+        });
+
+        // 绘制 Availability 图表（直接展示数据中的 result 状态）
+        Highcharts.chart('chart-availability', {
+          chart: {
+            type: 'line',
+            zoomType: 'x'
+          },
+          title: {
+            text: 'Availability over Time by Model'
+          },
+          xAxis: {
+            type: 'datetime',
+            title: { text: 'Time' },
+            min: minTime,
+            max: maxTime
+          },
+          yAxis: {
+            title: { text: 'Status' },
+            type: 'category',
+            categories: availabilityCategories
+          },
+          tooltip: {
+            xDateFormat: '%Y-%m-%d %H:%M:%S',
+            formatter: function () {
+              // 显示对应类别名称而非索引值
+              let s = Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>';
+              this.points.forEach(point => {
+                s += '<span style="color:' + point.series.color + '">\u25CF</span> ' +
+                     point.series.name + ': ' + availabilityCategories[point.y] + '<br/>';
+              });
+              return s;
+            },
+            shared: true
+          },
+          series: availabilitySeries
         });
       })
       .catch(error => {
@@ -225,7 +338,7 @@
         });
     });
 
-    // 可选：使用 Socket.IO 实现自动刷新（若后端推送刷新事件）
+    // 使用 Socket.IO 实现自动刷新（若后端推送刷新事件）
     var socket = io();
     socket.on('refresh_stats', function (data) {
       console.log('Received refresh event:', data);
