@@ -293,6 +293,10 @@ document.getElementById('refresh-btn').addEventListener('click', function() {
             taskStatus.textContent = '刷新出现错误，请重试。';
         });
 });
+        // 每隔60分钟（3600000毫秒）自动刷新页面
+setInterval(function() {
+    window.location.reload();
+}, 3600000); // 60分钟
 </script>
 </body>
 </html>
