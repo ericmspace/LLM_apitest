@@ -136,7 +136,7 @@
         }
     </style>
     <!-- Socket.IO client library -->
-    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.js"></script>
 </head>
 <body>
     <div class="container">
@@ -283,7 +283,7 @@
         document.getElementById('refresh-btn').addEventListener('click', function() {
             const taskStatus = document.getElementById('task-status');
             taskStatus.style.display = 'inline';
-            taskStatus.textContent = '正在刷新数据，请稍候...';
+            taskStatus.textContent = 'Refreshing data, please wait...';
 
             fetch('/refresh')
                 .then(response => response.json())
