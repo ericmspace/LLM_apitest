@@ -188,8 +188,8 @@ def initial_check():
 def periodic_check():
     while True:
         initial_check()  # 执行初始化检查
+        calculate_availability()
         time.sleep(60*30)  # 每30分钟运行一次
-
 # 启动Flask服务，提供结果的接口
 @app.route('/result')
 def result():
