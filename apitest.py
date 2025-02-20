@@ -15,7 +15,7 @@ def load_api_configs(file_path='local.yaml'):
         return yaml.safe_load(file)
 
 api_configs = load_api_configs() 
-# MongoDB配置
+# mongodboDB配置
 client = MongoClient('localhost', 27017)
 db = client['llm_api_availability']
 collection = db['api_status']
@@ -306,11 +306,11 @@ def refresh():
     return jsonify({"status": "success", "message": "Refreshing data"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=app.config['PORT'])
+    #app.run(host='0.0.0.0', port=app.config['PORT'])
     initial_check()  # 启动后立即执行一次初始化检查
     calculate_availability()  # 启动后立即执行一次统计计算
     # 启动Flask应用
-    #app.run(host='0.0.0.0', port=app.config['PORT'])
+    app.run(host='0.0.0.0', port=app.config['PORT'])
     # 启动定时检查线程
     threading.Thread(target=periodic_check, daemon=True).start()
     # 启动定时任务线程
