@@ -139,7 +139,7 @@ def check_api_status(api_config, api_type, model_name):
             adjusted_response_time = total_generation_time - req_ttft if total_generation_time > req_ttft else total_generation_time
         else:
             result = "unknown"
-            adjusted_response_time = 202
+            adjusted_response_time = 0
             req_ttft = 0
             speed = 0
             print(f"在单轮检测中不可用: {api_type}的{model_name}模型")
@@ -147,7 +147,7 @@ def check_api_status(api_config, api_type, model_name):
         result = categorize_response_time(adjusted_response_time)
         speed = tokens_generated / adjusted_response_time if adjusted_response_time > 0 and tokens_generated > 0 else 0
     except Exception as e:
-        adjusted_response_time = 404
+        adjusted_response_time = 0
         result = "unknown"
         speed = 0
         req_ttft = 0
@@ -161,7 +161,7 @@ def check_api_status(api_config, api_type, model_name):
 def categorize_response_time(response_time):
     if response_time < 5:
         return "smooth"
-    elif response_time <= 30:
+    elif response_time <= 35:
         return "available"
     elif response_time <= 50:
         return "congestion"
@@ -172,7 +172,7 @@ def categorize_response_time(response_time):
 
 # 执行单次检查的函数
 def initial_check():
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         futures = []
         # 遍历API提供商和客户端配置
         for api_type, api_clients in api_configs['apis'].items():
