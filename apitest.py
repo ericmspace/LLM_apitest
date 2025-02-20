@@ -48,8 +48,7 @@ def check_api_status(api_config, api_type, model_name):
     client_id = api_config.get("id")  # 使用人工设置的id
     tokens_generated = 0
     req_ttft = 0  # 新增变量：请求到第一个 token 的时间
-    #msg = "Please将以下内容，翻译成现代普通话：侍卫之臣不懈于内，忠志之士忘身于外者，盖追先帝之殊遇，欲报之于陛下也。诚宜开张圣听，以光先帝遗德，恢弘志士之气，不宜妄自菲薄，引喻失义，以塞忠谏之路也。宫中府中，俱为一体，陟罚臧否，不宜异同。若有作奸犯科及为忠善者，宜付有司论其刑赏，以昭陛下平明之理，不宜偏私，使内外异法也。侍中、侍郎郭攸之、费祎、董允等，此皆良实，志虑忠纯，是以先帝简拔以遗陛下。愚以为宫中之事，事无大小，悉以咨之，然后施行，必能裨补阙漏，有所广益。将军向宠，性行淑均，晓畅军事，试用于昔日，先帝称之曰能，是以众议举宠为督。愚以为营中之事，悉以咨之，必能使行阵和睦，优劣得所。亲贤臣，远小人，此先汉所以兴隆也；亲小人，远贤臣，此后汉所以倾颓也。先帝在时，每与臣论此事，未尝不叹息痛恨于桓、灵也。侍中、尚书、长史、参军，此悉贞良死节之臣，愿陛下亲之信之，则汉室之隆，可计日而待也。臣本布衣，躬耕于南阳，苟全性命于乱世，不求闻达于诸侯。先帝不以臣卑鄙，猥自枉屈，三顾臣于草庐之中，咨臣以当世之事，由是感激，遂许先帝以驱驰。后值倾覆，受任于败军之际，奉命于危难之间，尔来二十有一年矣。先帝知臣谨慎，故临崩寄臣以大事也。受命以来，夙夜忧叹，恐托付不效，以伤先帝之明，故五月渡泸，深入不毛。今南方已定，兵甲已足，当奖率三军，北定中原，庶竭驽钝，攘除奸凶，兴复汉室，还于旧都。淮阴侯韩信者，淮阴人也。始为布衣时，贫无行，不得推择为吏，又不能治生商贾，常从人寄食饮，人多厌之者，常数从其下乡南昌亭长寄食。"
-    msg = "Please使用以下模板创建一个自我介绍，不要加句号。name填入'迪力木拉提莫尔索'，age填入'18',hobby填入'打羽毛球、英语、法语、编程、旅游':'大家好，我的名字是{name},我来自美国洛杉矶，是一名华人，今年{age}岁，我平日里最大的爱好是{hobby}，我曾经前往新加坡、中国香港等多地旅游，希望在以后的日子里能够与各位和睦相处，我们是相亲相爱的一家人，大家有什么问题可以尽管来问我，我涉猎广泛，可以帮助大家尽一份心力，谢谢。"
+    msg = "Please使用以下模板创建一个自我介绍，不要加句号。name填入'迪力木拉提莫尔索'，age填入'18',hobby填入'打羽毛球、英语、法语、编程、旅游':'大家好，我的名字是{name},我来自美国洛杉矶，是一名华人，今年{age}岁，我平日里最大的爱好是{hobby}，我曾经前往新加坡、中国香港等多地旅游，希望在以后的日子里能够与各位和睦相处，我们是相亲相爱的一家人，大家有什么问题可以尽管来问我，我涉猎广泛，可以帮助大家尽一份心力，接下来我要背诵一篇诗文：侍卫之臣不懈于内，忠志之士忘身于外者，盖追先帝之殊遇，欲报之于陛下也。诚宜开张圣听，以光先帝遗德，恢弘志士之气，不宜妄自菲薄，引喻失义，以塞忠谏之路也。宫中府中，俱为一体，陟罚臧否，不宜异同。若有作奸犯科及为忠善者，宜付有司论其刑赏，以昭陛下平明之理，不宜偏私，使内外异法也。"
     try:
         # 针对OpenAI-compatible API执行双重请求
         if api_type in ["openai", "openrouter", "deepseek", "kimi", "volcengine", "Siflow", "azure", "Grok", "Qwen","GLM"]:
@@ -74,7 +73,6 @@ def check_api_status(api_config, api_type, model_name):
                 else:
                     client_obj = openai.OpenAI(api_key=api_config['api_key'])
             # 修改：执行流式请求以测量 Req_TTFT
-            
             stream_start = time.time()
             stream_response = client_obj.chat.completions.create(model=model_name, messages=[{'role': 'user', 'content': msg}], stream=True)
             for chunk in stream_response:
@@ -120,7 +118,7 @@ def check_api_status(api_config, api_type, model_name):
             req_ttft = 0
             stream_response = client_obj.messages.create(
                 model=model_name,
-                max_tokens=592,
+                max_tokens=892,
                 messages=[{
                     "role": "user",
                     "content": msg
