@@ -16,8 +16,8 @@ This project is designed to monitor the availability and performance of various 
 - Web Interface: Flask-based web interface to view statistics, search for providers and models, and refresh data.  
   Web 界面：基于 Flask 的 Web 界面，用于查看统计数据、搜索提供商和模型、以及刷新数据。
 
-- Real-time Updates: Data is periodically refreshed every 30 minutes, and API statistics are computed every 50 minutes.  
-  实时更新：数据每 30 分钟定期刷新，API 统计数据每 50 分钟计算一次。
+- Real-time Updates: Data is periodically refreshed every 30 minutes, and API statistics are computed every 35 minutes.  
+  实时更新：数据每 30 分钟定期刷新，API 统计数据每 35 分钟计算一次。
 
 - Search and Sort: Search for providers or models, and sort the data based on different columns like availability, speed, etc.  
   搜索与排序：可以搜索提供商或模型，并根据可用性、速度等不同列进行排序。
@@ -96,8 +96,8 @@ Once the Flask app is running, you can access the statistics and results by navi
 - API Statistics: `http://localhost:9500/stats`  
   API 统计数据：`http://localhost:9500/stats`
 
-- Result: `http://localhost:9500/result`  
-  结果：`http://localhost:9500/result`
+- Record: `http://localhost:9500/result`  
+  日志：`http://localhost:9500/result`
   
 - Kanban: `http://localhost:9500/kanban`  
   看板：`http://localhost:9500/kanban`
