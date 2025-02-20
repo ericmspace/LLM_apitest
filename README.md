@@ -117,8 +117,8 @@ API 的响应时间被分类为以下几组：
 - Smooth: Response time < 5 seconds  
   流畅：响应时间 < 5 秒
 
-- Available: Response time ≤ 30 seconds  
-  可用：响应时间 ≤ 30 秒
+- Available: Response time ≤ 35 seconds  
+  可用：响应时间 ≤ 35 秒
 
 - Congestion: Response time ≤ 50 seconds  
   拥堵：响应时间 ≤ 50 秒
