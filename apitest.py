@@ -8,6 +8,7 @@ import threading
 import anthropic
 from concurrent.futures import ThreadPoolExecutor
 import yaml
+from flask_socketio import SocketIO, emit
 
 # 配置部分包括API的ID和模型
 def load_api_configs(file_path='local.yaml'):
@@ -23,7 +24,7 @@ collection = db['api_status']
 # Flask应用设置
 app = Flask(__name__)
 app.config['PORT'] = 9500
-
+socketio = SocketIO(app)
 # 时区设置为东八区（UTC+8）
 def get_east_8_timezone():
     return timezone(timedelta(hours=8))
@@ -210,7 +211,7 @@ def calculate_availability():
     eight_hours_ago = current_time - timedelta(hours=8)
     eight_hours_ago_str = eight_hours_ago.strftime("%Y-%m-%d %H:%M:%S")
 
-    # 优化后的聚合管道，新增 latest_req_ttft 字段
+    # 优化后的聚合管道，新增 latest_timestamp 字段
     pipeline = [
         {"$match": {"timestamp": {"$gte": eight_hours_ago_str}}},
         {"$sort": {"timestamp": -1}},  # 按时间倒序排序
@@ -219,13 +220,15 @@ def calculate_availability():
             "recent_results": {"$push": "$$ROOT"},
             "latest_speed": {"$first": "$speed"},  # 获取最新记录的 speed
             "latest_response_time": {"$first": "$response_time"},  # 最新的响应时间
-            "latest_req_ttft": {"$first": "$req_ttft"}  # 获取最新记录的 req_ttft
+            "latest_req_ttft": {"$first": "$req_ttft"},  # 获取最新记录的 req_ttft
+            "latest_timestamp": {"$first": "$timestamp"}  # 获取最新记录的 timestamp
         }},
         {"$project": {
             "recent_results": {"$slice": ["$recent_results", 15]},
             "latest_speed": 1,
             "latest_response_time": 1,
-            "latest_req_ttft": 1
+            "latest_req_ttft": 1,
+            "latest_timestamp": 1  # 保留最新的 timestamp
         }}
     ]
 
@@ -244,10 +247,11 @@ def calculate_availability():
             available_count = sum(1 for r in results if r in ["smooth", "available", "congestion"])
             availability = f"{(available_count / len(results)) * 100:.2f}%"
 
-        # 获取最新性能指标，包括 req_ttft
+        # 获取最新性能指标，包括 req_ttft 和 timestamp
         latest_speed = group.get("latest_speed", 0)
-        latest_response = f"{group.get("latest_response_time", 0):.3f}"
+        latest_response = f"{group.get('latest_response_time', 0):.3f}"
         latest_req_ttft = group.get("latest_req_ttft", 0)
+        latest_timestamp = group.get("latest_timestamp", current_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         # 保存到统计集合，同一 client_id 与 model_name 只有一条记录（更新最新数据）
         stats_data = {
@@ -257,7 +261,7 @@ def calculate_availability():
             "speed": latest_speed,
             "response": latest_response,
             "req_ttft": latest_req_ttft,  # 新增的 req_ttft 指标
-            "last_updated": current_time.strftime("%Y-%m-%d %H:%M:%S")
+            "last_updated": latest_timestamp  # 使用最新的 timestamp 作为 last_updated
         }
 
         stats_collection.update_one(
@@ -266,11 +270,12 @@ def calculate_availability():
             upsert=True
         )
 
-# 定时任务：每50分钟计算一次
+# 定时任务：每35分钟计算一次
 def periodic_availability_check():
     while True:
         calculate_availability()
-        time.sleep(50 * 60)
+        socketio.emit('refresh_stats', {'message': 'Data refreshed'})
+        time.sleep(35 * 60)
 
 @app.route('/sta')
 def api_statistics():
@@ -308,4 +313,4 @@ if __name__ == '__main__':
     threading.Thread(target=periodic_check, daemon=True).start()
     # 启动定时任务线程
     threading.Thread(target=periodic_availability_check, daemon=True).start()
-    app.run(host='0.0.0.0', port=app.config['PORT'])
+    socketio.run(app, host='0.0.0.0', port=app.config['PORT'])

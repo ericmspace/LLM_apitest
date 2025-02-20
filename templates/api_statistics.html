@@ -129,6 +129,8 @@
             margin-right: 1rem;
         }
     </style>
+    <!-- 添加 Socket.IO 客户端库 -->
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -195,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const headers = document.querySelectorAll('th[data-sort]');
     let sortDirection = {};
 
-    // Search Functionality
+    // 搜索功能
     function filterTable() {
         const providerValue = providerSearch.value.toLowerCase();
         const modelValue = modelSearch.value.toLowerCase();
@@ -214,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
     providerSearch.addEventListener('input', filterTable);
     modelSearch.addEventListener('input', filterTable);
 
-    // Sorting Functionality
+    // 排序功能
     headers.forEach(header => {
         header.addEventListener('click', () => {
             const sortKey = header.getAttribute('data-sort');
@@ -270,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Refresh Button Functionality
+// 刷新按钮功能
 document.getElementById('refresh-btn').addEventListener('click', function() {
     const taskStatus = document.getElementById('task-status');
     taskStatus.style.display = 'inline';
@@ -293,10 +295,14 @@ document.getElementById('refresh-btn').addEventListener('click', function() {
             taskStatus.textContent = '刷新出现错误，请重试。';
         });
 });
-        // 每隔60分钟（3600000毫秒）自动刷新页面
-setInterval(function() {
+
+// 新增：通过 Socket.IO 监听后端的刷新事件
+var socket = io();
+socket.on('refresh_stats', function(data) {
+    console.log('Received refresh event:', data);
+    // 自动刷新页面
     window.location.reload();
-}, 3600000); // 60分钟
+});
 </script>
 </body>
 </html>
