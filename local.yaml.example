@@ -1,0 +1,89 @@
+apis:
+  azure:
+    azure_client_1:
+      id: 0
+      api_key: example
+      endpoint: example
+      models:
+      - gpt-4o
+  openai:
+    openai_client_1:
+      id: 1
+      api_key: example
+      models:
+      - gpt-4o
+      - o1-mini
+      - o1
+      - o3-mini
+      - o3
+  openrouter:
+    openai_client_1:
+      id: 2
+      api_key: example
+      base_url: https://openrouter.ai/api/v1
+      models:
+      - microsoft/phi-3-medium-128k-instruct:free
+  dreamily:
+    dreamily_client_1:
+      id: 3
+      api_key: example
+      base_url: example
+      models:
+      - dreamily
+  anthropic:
+    anthropic_client_1:
+      id: 4
+      api_key: example
+      models:
+      - claude-3-5-sonnet-20241022
+  deepseek:
+    deepseek_client_1:
+      id: 5
+      api_key: example
+      base_url: https://api.deepseek.com/v1
+      models:
+      - deepseek-chat
+      - deepseek-reasoner
+  volcengine:
+    volcengine_client_1:
+      id: 6
+      api_key: example
+      base_url: https://ark.cn-beijing.volces.com/api/v3/
+      models:
+      - example
+      - example
+  kimi:
+    kimi_client_1:
+      id: 7
+      api_key: example
+      base_url: https://api.moonshot.cn/v1
+      models:
+      - kimi-latest-8k
+  Siflow:
+    Siflow_client_1:
+      id: 8
+      api_key: example
+      base_url: https://api.siliconflow.cn/v1
+      models:
+      - deepseek-ai/DeepSeek-V3
+  GLM:
+    bigmodel_client_1:
+      id: 9
+      api_key: example
+      base_url: https://open.bigmodel.cn/api/paas/v4
+      models:
+      - glm-4
+  Grok:
+    X_client_1:
+      id: 10
+      api_key: example
+      base_url: https://api.x.ai/v1
+      models:
+      - grok-3
+  Qwen:
+    Ali_client_1:
+      id: 11
+      api_key: example
+      base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      models:
+      - qwen-max-2025-01-25

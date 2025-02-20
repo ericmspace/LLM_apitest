@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caiyun API Statistics</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #6b7280;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--background);
+            color: var(--text-primary);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        h1 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            text-align: center;
+            position: relative;
+        }
+        h1::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-color);
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            border-radius: 2px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            overflow: hidden;
+        }
+        thead {
+            background: linear-gradient(to right, #6366f1, #8b5cf6);
+            color: white;
+            border-radius: 8px;
+        }
+        th {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+        td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            th, td { padding: 0.75rem; }
+            th:nth-last-child(-n+2), td:nth-last-child(-n+2) { display: none; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        table tbody tr {
+            animation: fadeIn 0.3s ease-out forwards;
+            opacity: 0;
+        }
+        table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+        table tbody tr:nth-child(2) { animation-delay: 0.15s; }
+        table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+        table tbody tr:nth-child(4) { animation-delay: 0.5s; }
+        table tbody tr:nth-child(5) { animation-delay: 0.6s; }
+        table tbody tr:nth-child(6) { animation-delay: 0.7s; }
+        table tbody tr:nth-child(7) { animation-delay: 0.8s; }
+        table tbody tr:nth-child(8) { animation-delay: 0.9s; }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #loading img {
+            width: 40px;
+            height: 40px;
+        }
+        #refresh-btn {
+            margin-bottom: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        #task-status {
+            display: none;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-left: 1rem;
+        }
+        #provider-search, #model-search {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>API Statistics</h1>
+
+    <!-- 搜索框 -->
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="provider-search" placeholder="Search Provider">
+        <input type="text" id="model-search" placeholder="Search Model Name">
+    </div>
+
+    <!-- 刷新按钮 -->
+    <button id="refresh-btn">Refresh</button>
+
+    <!-- 任务状态提示 -->
+    <span id="task-status">Task submitted, will refresh automatically...</span>
+
+    <table>
+        <thead>
+            <tr>
+                <th data-sort="provider">Provider</th>
+                <th data-sort="model">Model Name</th>
+                <th data-sort="availability">Availability</th>
+                <th data-sort="speed">TPOT(token/s)</th>
+                <th data-sort="response">Latest Response(s)</th>
+                <th data-sort="last_updated">Last Updated</th>
+                <th data-sort="req_ttft">Req+TTFT(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in statistics %}
+            <tr>
+                <td>
+                    {% if stat.client_id == 0 %}Azure
+                    {% elif stat.client_id == 1 %}OpenAI
+                    {% elif stat.client_id == 2 %}OpenRouter
+                    {% elif stat.client_id == 3 %}Dreamily
+                    {% elif stat.client_id == 4 %}Anthropic
+                    {% elif stat.client_id == 5 %}Deepseek
+                    {% elif stat.client_id == 6 %}VolcEngine
+                    {% elif stat.client_id == 7 %}Kimi
+                    {% elif stat.client_id == 8 %}Siflow
+                    {% elif stat.client_id == 9 %}ChatGLM
+                    {% else %}Unknown{% endif %}
+                </td>
+                <td>{{ stat.model_name }}</td>
+                <td><span class="availability" data-value="{{ stat.availability }}">{{ stat.availability }}</span></td>
+                <td>{{ stat.speed }}</td>
+                <td>{{ stat.response }}</td>
+                <td>{{ stat.last_updated }}</td>
+                <td>{{ stat.req_ttft }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const providerSearch = document.getElementById('provider-search');
+    const modelSearch = document.getElementById('model-search');
+    const table = document.querySelector('table tbody');
+    const rows = table.querySelectorAll('tr');
+    const headers = document.querySelectorAll('th[data-sort]');
+    let sortDirection = {};
+
+    // Search Functionality
+    function filterTable() {
+        const providerValue = providerSearch.value.toLowerCase();
+        const modelValue = modelSearch.value.toLowerCase();
+
+        rows.forEach(row => {
+            const providerCell = row.cells[0].textContent.toLowerCase();
+            const modelCell = row.cells[1].textContent.toLowerCase();
+
+            const providerMatch = providerCell.includes(providerValue);
+            const modelMatch = modelCell.includes(modelValue);
+
+            row.style.display = (providerMatch && modelMatch) ? '' : 'none';
+        });
+    }
+
+    providerSearch.addEventListener('input', filterTable);
+    modelSearch.addEventListener('input', filterTable);
+
+    // Sorting Functionality
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const sortKey = header.getAttribute('data-sort');
+            const isAscending = !sortDirection[sortKey] || sortDirection[sortKey] === 'desc';
+            sortDirection[sortKey] = isAscending ? 'asc' : 'desc';
+            sortTable(sortKey, isAscending);
+        });
+    });
+
+    function sortTable(key, ascending) {
+        const tbody = document.querySelector('table tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+
+        rows.sort((a, b) => {
+            let aValue = a.cells[getColumnIndex(key) - 1].textContent.trim();
+            let bValue = b.cells[getColumnIndex(key) - 1].textContent.trim();
+
+            if (key === 'availability') {
+                if (aValue === 'unknown') return 1;
+                if (bValue === 'unknown') return -1;
+                aValue = parseFloat(aValue);
+                bValue = parseFloat(bValue);
+            } else if (key === 'speed' || key === 'response' || key === 'req_ttft') {
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+            } else if (key === 'last_updated') {
+                aValue = new Date(aValue);
+                bValue = new Date(bValue);
+            } else {
+                aValue = aValue.toLowerCase();
+                bValue = bValue.toLowerCase();
+            }
+
+            if (aValue < bValue) return ascending ? -1 : 1;
+            if (aValue > bValue) return ascending ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function getColumnIndex(key) {
+        const mapping = {
+            'provider': 1,
+            'model': 2,
+            'availability': 3,
+            'speed': 4,
+            'response': 5,
+            'last_updated': 6,
+            'req_ttft': 7
+        };
+        return mapping[key] || 0;
+    }
+});
+
+// Refresh Button Functionality
+document.getElementById('refresh-btn').addEventListener('click', function() {
+    const taskStatus = document.getElementById('task-status');
+    taskStatus.style.display = 'inline';
+    taskStatus.textContent = '正在刷新数据，请稍候...';
+
+    fetch('/refresh')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                taskStatus.textContent = '刷新完成，即将加载最新数据';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                taskStatus.textContent = '刷新失败，请重试。';
+            }
+        })
+        .catch(error => {
+            console.error("Error refreshing data:", error);
+            taskStatus.textContent = '刷新出现错误，请重试。';
+        });
+});
+</script>
+</body>
+</html>
