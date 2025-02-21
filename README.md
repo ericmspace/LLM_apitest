@@ -19,7 +19,7 @@ This project is designed to monitor the availability and performance of various 
 - Real-time Updates: Data is periodically refreshed every 10 minutes, and API statistics are computed every 15 minutes.  
   实时更新：数据每 10 分钟定期刷新，API 统计数据每 15 分钟计算一次。
 
-- Search and Sort: Search for providers or models, and sort the data based on different columns like availability, speed, etc.  
+- Search and Sort: Search for providers or models, and sort the data based on different columns like availability, speed, etc.
   搜索与排序：可以搜索提供商或模型，并根据可用性、速度等不同列进行排序。
   
 - Dark Mode Support: The web interface supports both light and dark modes for improved user experience across different environments.
