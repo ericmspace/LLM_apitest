@@ -16,8 +16,8 @@ This project is designed to monitor the availability and performance of various 
 - Web Interface: Flask-based web interface to view statistics, search for providers and models, and refresh data.  
   Web 界面：基于 Flask 的 Web 界面，用于查看统计数据、搜索提供商和模型、以及刷新数据。
 
-- Real-time Updates: Data is periodically refreshed every 30 minutes, and API statistics are computed every 35 minutes.  
-  实时更新：数据每 30 分钟定期刷新，API 统计数据每 35 分钟计算一次。
+- Real-time Updates: Data is periodically refreshed every 10 minutes, and API statistics are computed every 15 minutes.  
+  实时更新：数据每 10 分钟定期刷新，API 统计数据每 15 分钟计算一次。
 
 - Search and Sort: Search for providers or models, and sort the data based on different columns like availability, speed, etc.  
   搜索与排序：可以搜索提供商或模型，并根据可用性、速度等不同列进行排序。
@@ -117,8 +117,8 @@ The system performs periodic checks every 30 minutes to test API availability an
 The response times of the APIs are categorized into the following groups:  
 API 的响应时间被分类为以下几组：
 
-- Smooth: Response time < 5 seconds  
-  流畅：响应时间 < 5 秒
+- Smooth: Response time < 8.5 seconds  
+  流畅：响应时间 < 8.5 秒
 
 - Available: Response time ≤ 35 seconds  
   可用：响应时间 ≤ 35 秒
