@@ -16,13 +16,25 @@
             --text-primary: #1e293b;
             --text-secondary: #6b7280;
         }
+
+        /* 暗黑模式样式 */
+        .dark {
+            --primary-color: #818cf8;
+            --background: #292929;
+            --surface: #000000;
+            --text-primary: #f1f5f9;
+            --text-secondary: #9ca3af;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 2rem;
             background-color: var(--background);
             color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease; /* 平滑切换效果 */
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -30,19 +42,26 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             padding: 2rem;
+            transition: background-color 0.3s ease;
         }
-/* 标题及下划线 —— 通过设置 inline-block，使下划线仅跟随文字长度 */
+
+        /* 标题及切换按钮布局 */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
         h1 {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        font-size: 1.8rem;
-        position: relative;
-        display: inline-block;
-        /* 利用左右自动外边距实现居中 */
-        margin-left: auto;
-        margin-right: auto;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
+            margin: 0;
         }
+
         h1::after {
             content: '';
             display: block;
@@ -54,17 +73,31 @@
             left: 0;
             border-radius: 2px;
         }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            margin-left: 1rem;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             background: var(--surface);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
+
         thead {
             background: linear-gradient(to right, #6366f1, #8b5cf6);
             color: white;
             border-radius: 8px;
         }
+
         th {
             padding: 1rem 1.5rem;
             text-align: left;
@@ -74,29 +107,36 @@
             letter-spacing: 0.5px;
             cursor: pointer;
         }
+
         td {
             padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--text-secondary);
         }
+
         tr:last-child td {
             border-bottom: none;
         }
+
         tr:hover td {
-            background-color: #f8fafc;
+            background-color: rgba(248, 250, 252, 0.1); /* 适配暗黑模式的悬停效果 */
         }
+
         @media (max-width: 768px) {
             .container { padding: 1rem; }
             th, td { padding: 0.75rem; }
             th:nth-last-child(-n+2), td:nth-last-child(-n+2) { display: none; }
         }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
         table tbody tr {
             animation: fadeIn 0.3s ease-out forwards;
             opacity: 0;
         }
+
         table tbody tr:nth-child(1) { animation-delay: 0.05s; }
         table tbody tr:nth-child(2) { animation-delay: 0.15s; }
         table tbody tr:nth-child(3) { animation-delay: 0.3s; }
@@ -105,22 +145,25 @@
         table tbody tr:nth-child(6) { animation-delay: 0.7s; }
         table tbody tr:nth-child(7) { animation-delay: 0.8s; }
         table tbody tr:nth-child(8) { animation-delay: 0.9s; }
+
         #loading {
             display: none;
             text-align: center;
             margin-top: 20px;
         }
+
         #loading img {
             width: 40px;
             height: 40px;
         }
-        /* New styles for button group and action buttons */
+
         .controls {
             display: flex;
             align-items: center;
             gap: 1rem;
             margin-bottom: 20px;
         }
+
         .action-btn {
             background-color: var(--primary-color);
             color: white;
@@ -130,34 +173,46 @@
             font-size: 1rem;
             cursor: pointer;
             text-decoration: none;
+            transition: background-color 0.3s ease;
         }
+
         #task-status {
             display: none;
             font-size: 0.875rem;
             color: var(--text-secondary);
         }
+
         #provider-search, #model-search {
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--text-secondary);
             border-radius: 4px;
             padding: 0.5rem;
             margin-right: 1rem;
+            background-color: var(--surface);
+            color: var(--text-primary);
         }
+
         footer {
-      text-align: center;
-      padding: 1rem;
-      color: var(--text-secondary);
-    }
-    footer a {
-      color: var(--primary-color);
-      text-decoration: none;
-    }
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
     </style>
     <!-- Socket.IO client library -->
     <script src="https://cdn.socket.io/4.8.1/socket.io.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>API Statistics</h1>
+        <div class="header">
+            <h1>API Statistics</h1>
+            <button id="theme-toggle" class="theme-toggle">
+                <span id="theme-icon">🌞</span>
+            </button>
+        </div>
         <!-- Buttons and status -->
         <div class="controls">
             <button id="refresh-btn" class="action-btn">Refresh</button>
@@ -212,7 +267,7 @@
     </div>
     <footer>
         Powered by <a href="https://github.com/ericmspace/apitest" target="_blank">CaiyunApitest</a>
-      </footer>
+    </footer>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const providerSearch = document.getElementById('provider-search');
@@ -220,7 +275,54 @@
             const table = document.querySelector('table tbody');
             const rows = table.querySelectorAll('tr');
             const headers = document.querySelectorAll('th[data-sort]');
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const body = document.body;
             let sortDirection = {};
+
+            // 获取东八区时间
+            const getEastEightTime = () => {
+                const options = { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false };
+                const formatter = new Intl.DateTimeFormat('en-US', options);
+                const parts = formatter.formatToParts(new Date());
+                const hour = parseInt(parts.find(p => p.type === 'hour').value);
+                const minute = parseInt(parts.find(p => p.type === 'minute').value);
+                return { hour, minute };
+            };
+
+            // 判断是否为夜间（21:00 - 05:00）
+            const isNightTime = () => {
+                const { hour } = getEastEightTime();
+                return hour >= 21 || hour < 5;
+            };
+
+            // 设置主题
+            const setTheme = (theme) => {
+                if (theme === 'dark') {
+                    body.classList.add('dark');
+                    themeIcon.textContent = '🌜'; // 月亮图标
+                } else {
+                    body.classList.remove('dark');
+                    themeIcon.textContent = '🌞'; // 太阳图标
+                }
+                localStorage.setItem('theme', theme);
+            };
+
+            // 初始化主题
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme); // 非首次加载时读取用户偏好
+            } else {
+                const initialTheme = isNightTime() ? 'dark' : 'light'; // 首次加载根据时间设置
+                setTheme(initialTheme);
+            }
+
+            // 手动切换主题
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = body.classList.contains('dark') ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                setTheme(newTheme);
+            });
 
             // Search functionality
             function filterTable() {

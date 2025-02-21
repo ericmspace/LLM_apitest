@@ -16,6 +16,16 @@
       --text-primary: #1e293b;
       --text-secondary: #6b7280;
     }
+
+    /* 暗黑模式样式 */
+    .dark {
+      --primary-color: #818cf8;
+      --background: #292929;
+      --surface: #000000;
+      --text-primary: #f1f5f9;
+      --text-secondary: #9ca3af;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       margin: 0;
@@ -25,7 +35,9 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease; /* 平滑切换效果 */
     }
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -34,19 +46,26 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       padding: 2rem;
       flex: 1;
+      transition: background-color 0.3s ease;
     }
-/* 标题及下划线 —— 通过设置 inline-block，使下划线仅跟随文字长度 */
+
+    /* 标题及切换按钮布局 */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
     h1 {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            font-size: 1.8rem;
-            position: relative;
-            display: inline-block;
-            /* 利用左右自动外边距实现居中 */
-            margin-left: auto;
-            margin-right: auto;
-            }
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1.8rem;
+      position: relative;
+      display: inline-block;
+      margin: 0;
+    }
+
     h1::after {
       content: '';
       display: block;
@@ -58,6 +77,17 @@
       left: 0;
       border-radius: 2px;
     }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      margin-left: 1rem;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
+    }
+
     .controls {
       display: flex;
       align-items: center;
@@ -65,6 +95,7 @@
       gap: 1rem;
       margin-bottom: 20px;
     }
+
     .action-btn {
       background-color: var(--primary-color);
       color: white;
@@ -74,27 +105,33 @@
       font-size: 1rem;
       cursor: pointer;
       text-decoration: none;
+      transition: background-color 0.3s ease;
     }
+
     #task-status {
       display: none;
       font-size: 0.875rem;
       color: var(--text-secondary);
     }
+
     .charts-container {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
     }
+
     .chart-box {
       flex: 1;
       min-width: 300px;
       height: 400px;
     }
+
     footer {
       text-align: center;
       padding: 1rem;
       color: var(--text-secondary);
     }
+
     footer a {
       color: var(--primary-color);
       text-decoration: none;
@@ -102,12 +139,19 @@
   </style>
   <!-- 引入 Highcharts -->
   <script src="https://cdn.jsdelivr.net/npm/highcharts@12.1.2/highcharts.js"></script>
+  <!-- 引入 Highcharts Dark Theme -->
+  <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
   <!-- Socket.IO 客户端 -->
   <script src="https://cdn.socket.io/4.8.1/socket.io.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>API Statistics</h1>
+    <div class="header">
+      <h1>API Statistics</h1>
+      <button id="theme-toggle" class="theme-toggle">
+        <span id="theme-icon">🌞</span>
+      </button>
+    </div>
     <div class="controls">
       <button id="refresh-btn" class="action-btn">Refresh</button>
       <a href="/stats" id="stats-btn" class="action-btn">Statistics</a>
@@ -127,232 +171,256 @@
   <footer>
     Powered by <a href="https://github.com/ericmspace/apitest" target="_blank">CaiyunApitest</a>
   </footer>
-
   <script>
-    // 将 "YYYY-MM-DD HH:MM:SS" 格式转换为 ISO 格式，以便构造 Date 对象
-    function parseTimestamp(ts) {
-      return new Date(ts.replace(' ', 'T')).getTime();
-    }
-
-    // 定义 Availability 图使用的类别顺序
-    const availabilityCategories = ["smooth", "available", "congestion", "lagging", "unknown"];
-
-    // 获取后端返回的数据，示例数据结构：
-    // {"_id":"...","client_id":2,"model_name":"microsoft/phi-3-medium-128k-instruct:free",
-    //  "req_ttft":1.36,"response_time":20.82,"result":"available","speed":50.57,"timestamp":"2025-02-19 16:44:46"}
-    fetch('/result')
-      .then(response => response.json())
-      .then(data => {
-        // 计算数据中的最大时间，并定义最近 8 小时的时间范围
-        let times = data.map(record => parseTimestamp(record.timestamp));
-        let maxTime = Math.max(...times);
-        let minTime = maxTime - 8 * 3600 * 1000; // 最近8小时
-
-        // 仅保留时间在最近8小时内的记录
-        let filteredData = data.filter(record => parseTimestamp(record.timestamp) >= minTime);
-
-        // 按模型分组数据，分别构造 Req+TTFT、TPOT、Response Time 和 Availability 数据
-        let seriesReq = {};
-        let seriesSpeed = {};
-        let seriesResponse = {};
-        let seriesAvailability = {};
-        filteredData.forEach(record => {
-          let time = parseTimestamp(record.timestamp);
-          let model = record.model_name;
-          if (!seriesReq[model]) seriesReq[model] = [];
-          if (!seriesSpeed[model]) seriesSpeed[model] = [];
-          if (!seriesResponse[model]) seriesResponse[model] = [];
-          if (!seriesAvailability[model]) seriesAvailability[model] = [];
-          seriesReq[model].push([time, record.req_ttft]);
-          seriesSpeed[model].push([time, record.speed]);
-          seriesResponse[model].push([time, record.response_time]);
-          // Availability：将 result 转换为对应类别的索引
-          let yValue = availabilityCategories.indexOf(record.result);
-          if (yValue === -1) {
-            yValue = availabilityCategories.indexOf("unknown");
+      document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+        let charts = {}; // 存储图表实例
+  
+        // 获取东八区时间函数保持不变
+        const getEastEightTime = () => {
+          const options = { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false };
+          const formatter = new Intl.DateTimeFormat('en-US', options);
+          const parts = formatter.formatToParts(new Date());
+          const hour = parseInt(parts.find(p => p.type === 'hour').value);
+          const minute = parseInt(parts.find(p => p.type === 'minute').value);
+          return { hour, minute };
+        };
+  
+        const isNightTime = () => {
+          const { hour } = getEastEightTime();
+          return hour >= 21 || hour < 5;
+        };
+  
+        // 图表配置模板
+        const chartConfigs = {
+          'chart-req': {
+            type: 'line',
+            zoomType: 'x',
+            title: 'Req+TTFT over Time',
+            yAxisTitle: 'Req+TTFT (s)'
+          },
+          'chart-speed': {
+            type: 'line',
+            zoomType: 'x',
+            title: 'TPOT (Token/s) over Time',
+            yAxisTitle: 'Tokens Per Second'
+          },
+          'chart-response-time': {
+            type: 'line',
+            zoomType: 'x',
+            title: 'Response Time over Time',
+            yAxisTitle: 'Response Time (s)'
+          },
+          'chart-availability': {
+            type: 'line',
+            zoomType: 'x',
+            title: 'Availability over Time by Model',
+            yAxisTitle: 'Status'
           }
-          seriesAvailability[model].push([time, yValue]);
-        });
-
-        // 转换为 Highcharts 所需的 series 数组，并按时间排序
-        let reqSeries = [];
-        for (let model in seriesReq) {
-          seriesReq[model].sort((a, b) => a[0] - b[0]);
-          reqSeries.push({
-            name: model,
-            data: seriesReq[model]
+        };
+  
+        // 主题配置
+        const themes = {
+          light: {
+            backgroundColor: 'transparent',
+            textColor: '#1e293b',
+            colors: ['#6366f1', '#ffbf50', '#23c389', '#ff6c55', '#8a74e8']
+          },
+          dark: {
+            backgroundColor: 'transparent',
+            textColor: '#f1f5f9',
+            colors: ['#f44336', '#2196f3', '#4caf50', '#ffeb3b', '#9c27b0']
+          }
+        };
+  
+        // 更新所有图表的函数
+        const updateChartsTheme = (theme) => {
+          Object.keys(charts).forEach(chartId => {
+            const chart = charts[chartId];
+            const config = chartConfigs[chartId];
+            const themeConfig = themes[theme];
+  
+            chart.update({
+              chart: {
+                backgroundColor: themeConfig.backgroundColor
+              },
+              colors: themeConfig.colors,
+              title: {
+                style: { color: themeConfig.textColor }
+              },
+              xAxis: {
+                title: {
+                  style: { color: themeConfig.textColor }
+                },
+                labels: {
+                  style: { color: themeConfig.textColor }
+                }
+              },
+              yAxis: {
+                title: {
+                  style: { color: themeConfig.textColor }
+                },
+                labels: {
+                  style: { color: themeConfig.textColor }
+                }
+              },
+              legend: {
+                itemStyle: { color: themeConfig.textColor }
+              }
+            }, true);
           });
-        }
-        let speedSeries = [];
-        for (let model in seriesSpeed) {
-          seriesSpeed[model].sort((a, b) => a[0] - b[0]);
-          speedSeries.push({
-            name: model,
-            data: seriesSpeed[model]
-          });
-        }
-        let responseSeries = [];
-        for (let model in seriesResponse) {
-          seriesResponse[model].sort((a, b) => a[0] - b[0]);
-          responseSeries.push({
-            name: model,
-            data: seriesResponse[model]
-          });
-        }
-        let availabilitySeries = [];
-        for (let model in seriesAvailability) {
-          seriesAvailability[model].sort((a, b) => a[0] - b[0]);
-          availabilitySeries.push({
-            name: model,
-            data: seriesAvailability[model]
-          });
-        }
-
-        // 绘制 Req+TTFT 图表
-        Highcharts.chart('chart-req', {
-          chart: {
-            type: 'line',
-            zoomType: 'x'
-          },
-          title: {
-            text: 'Req+TTFT over Time'
-          },
-          xAxis: {
-            type: 'datetime',
-            title: { text: 'Time' },
-            min: minTime,
-            max: maxTime
-          },
-          yAxis: {
-            title: { text: 'Req+TTFT (s)' }
-          },
-          tooltip: {
-            xDateFormat: '%Y-%m-%d %H:%M:%S',
-            shared: true
-          },
-          series: reqSeries
+        };
+  
+        // 设置主题
+        const setTheme = (theme) => {
+          body.classList.toggle('dark', theme === 'dark');
+          themeIcon.textContent = theme === 'dark' ? '🌛' : '🌞';
+          localStorage.setItem('theme', theme);
+          updateChartsTheme(theme);
+        };
+  
+        // 初始化主题
+        const savedTheme = localStorage.getItem('theme');
+        const initialTheme = savedTheme || (isNightTime() ? 'dark' : 'light');
+        setTheme(initialTheme);
+  
+        // 主题切换事件
+        themeToggle.addEventListener('click', () => {
+          const currentTheme = body.classList.contains('dark') ? 'dark' : 'light';
+          setTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
-
-        // 绘制 TPOT (Token/s) 图表
-        Highcharts.chart('chart-speed', {
-          chart: {
-            type: 'line',
-            zoomType: 'x'
-          },
-          title: {
-            text: 'TPOT (Token/s) over Time'
-          },
-          xAxis: {
-            type: 'datetime',
-            title: { text: 'Time' },
-            min: minTime,
-            max: maxTime
-          },
-          yAxis: {
-            title: { text: 'Tokens Per Second' }
-          },
-          tooltip: {
-            xDateFormat: '%Y-%m-%d %H:%M:%S',
-            shared: true
-          },
-          series: speedSeries
-        });
-
-        // 绘制 Response Time 图表
-        Highcharts.chart('chart-response-time', {
-          chart: {
-            type: 'line',
-            zoomType: 'x'
-          },
-          title: {
-            text: 'Response Time over Time'
-          },
-          xAxis: {
-            type: 'datetime',
-            title: { text: 'Time' },
-            min: minTime,
-            max: maxTime
-          },
-          yAxis: {
-            title: { text: 'Response Time (s)' }
-          },
-          tooltip: {
-            xDateFormat: '%Y-%m-%d %H:%M:%S',
-            shared: true
-          },
-          series: responseSeries
-        });
-
-        // 绘制 Availability 图表（直接展示数据中的 result 状态）
-        Highcharts.chart('chart-availability', {
-          chart: {
-            type: 'line',
-            zoomType: 'x'
-          },
-          title: {
-            text: 'Availability over Time by Model'
-          },
-          xAxis: {
-            type: 'datetime',
-            title: { text: 'Time' },
-            min: minTime,
-            max: maxTime
-          },
-          yAxis: {
-            title: { text: 'Status' },
-            type: 'category',
-            categories: availabilityCategories
-          },
-          tooltip: {
-            xDateFormat: '%Y-%m-%d %H:%M:%S',
-            formatter: function () {
-              // 显示对应类别名称而非索引值
-              let s = Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>';
-              this.points.forEach(point => {
-                s += '<span style="color:' + point.series.color + '">\u25CF</span> ' +
-                     point.series.name + ': ' + availabilityCategories[point.y] + '<br/>';
+  
+        // 图表数据处理和初始化
+        function parseTimestamp(ts) {
+          return new Date(ts.replace(' ', 'T')).getTime();
+        }
+  
+        const availabilityCategories = ["smooth", "available", "congestion", "lagging", "unknown"];
+  
+        fetch('/result')
+          .then(response => response.json())
+          .then(data => {
+            let times = data.map(record => parseTimestamp(record.timestamp));
+            let maxTime = Math.max(...times);
+            let minTime = maxTime - 8 * 3600 * 1000;
+            let filteredData = data.filter(record => parseTimestamp(record.timestamp) >= minTime);
+  
+            // 数据处理逻辑保持不变
+            let seriesReq = {}, seriesSpeed = {}, seriesResponse = {}, seriesAvailability = {};
+            filteredData.forEach(record => {
+              let time = parseTimestamp(record.timestamp);
+              let model = record.model_name;
+              if (!seriesReq[model]) seriesReq[model] = [];
+              if (!seriesSpeed[model]) seriesSpeed[model] = [];
+              if (!seriesResponse[model]) seriesResponse[model] = [];
+              if (!seriesAvailability[model]) seriesAvailability[model] = [];
+              seriesReq[model].push([time, record.req_ttft]);
+              seriesSpeed[model].push([time, record.speed]);
+              seriesResponse[model].push([time, record.response_time]);
+              let yValue = availabilityCategories.indexOf(record.result);
+              if (yValue === -1) yValue = availabilityCategories.indexOf("unknown");
+              seriesAvailability[model].push([time, yValue]);
+            });
+  
+            // 转换为系列数据
+            const createSeries = (seriesData) => Object.entries(seriesData)
+              .map(([model, data]) => ({
+                name: model,
+                data: data.sort((a, b) => a[0] - b[0])
+              }));
+  
+            const reqSeries = createSeries(seriesReq);
+            const speedSeries = createSeries(seriesSpeed);
+            const responseSeries = createSeries(seriesResponse);
+            const availabilitySeries = createSeries(seriesAvailability);
+  
+            // 创建图表
+            const createChart = (id, series, yAxisTitle, extraConfig = {}) => {
+              const theme = body.classList.contains('dark') ? 'dark' : 'light';
+              const themeConfig = themes[theme];
+  
+              charts[id] = Highcharts.chart(id, {
+                chart: {
+                  type: chartConfigs[id].type,
+                  zoomType: chartConfigs[id].zoomType,
+                  backgroundColor: themeConfig.backgroundColor
+                },
+                title: {
+                  text: chartConfigs[id].title,
+                  style: { color: themeConfig.textColor }
+                },
+                colors: themeConfig.colors,
+                xAxis: {
+                  type: 'datetime',
+                  title: { text: 'Time', style: { color: themeConfig.textColor } },
+                  min: minTime,
+                  max: maxTime,
+                  labels: { style: { color: themeConfig.textColor } }
+                },
+                yAxis: {
+                  title: { text: yAxisTitle, style: { color: themeConfig.textColor } },
+                  labels: { style: { color: themeConfig.textColor } },
+                  ...(id === 'chart-availability' ? { categories: availabilityCategories } : {})
+                },
+                tooltip: {
+                  xDateFormat: '%Y-%m-%d %H:%M:%S',
+                  shared: true,
+                  ...(id === 'chart-availability' ? {
+                    formatter: function() {
+                      let s = Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>';
+                      this.points.forEach(point => {
+                        s += `<span style="color:${point.series.color}">\u25CF</span> ${
+                          point.series.name}: ${availabilityCategories[point.y]}<br/>`;
+                      });
+                      return s;
+                    }
+                  } : {})
+                },
+                series: series,
+                legend: {
+                  itemStyle: { color: themeConfig.textColor }
+                },
+                ...extraConfig
               });
-              return s;
-            },
-            shared: true
-          },
-          series: availabilitySeries
+            };
+  
+            createChart('chart-req', reqSeries, 'Req+TTFT (s)');
+            createChart('chart-speed', speedSeries, 'Tokens Per Second');
+            createChart('chart-response-time', responseSeries, 'Response Time (s)');
+            createChart('chart-availability', availabilitySeries, 'Status');
+          })
+          .catch(error => console.error("Error fetching data:", error));
+  
+        // 刷新按钮事件保持不变
+        document.getElementById('refresh-btn').addEventListener('click', function () {
+          const taskStatus = document.getElementById('task-status');
+          taskStatus.style.display = 'inline';
+          taskStatus.textContent = 'Refreshing data, please wait...';
+  
+          fetch('/refresh')
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === "success") {
+                taskStatus.textContent = 'Refresh complete, reloading page...';
+                setTimeout(() => window.location.reload(), 1000);
+              } else {
+                taskStatus.textContent = 'Refresh failed, please try again.';
+              }
+            })
+            .catch(error => {
+              console.error("Error refreshing data:", error);
+              taskStatus.textContent = 'Error occurred during refresh.';
+            });
         });
-      })
-      .catch(error => {
-        console.error("Error fetching data:", error);
+  
+        var socket = io();
+        socket.on('refresh_stats', function (data) {
+          console.log('Received refresh event:', data);
+          window.location.reload();
+        });
       });
-
-    // 刷新按钮功能：调用后端 /refresh 接口，成功后刷新页面
-    document.getElementById('refresh-btn').addEventListener('click', function () {
-      const taskStatus = document.getElementById('task-status');
-      taskStatus.style.display = 'inline';
-      taskStatus.textContent = 'Refreshing data, please wait...';
-
-      fetch('/refresh')
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === "success") {
-            taskStatus.textContent = 'Refresh complete, reloading page...';
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          } else {
-            taskStatus.textContent = 'Refresh failed, please try again.';
-          }
-        })
-        .catch(error => {
-          console.error("Error refreshing data:", error);
-          taskStatus.textContent = 'Error occurred during refresh.';
-        });
-    });
-
-    // 使用 Socket.IO 实现自动刷新（若后端推送刷新事件）
-    var socket = io();
-    socket.on('refresh_stats', function (data) {
-      console.log('Received refresh event:', data);
-      window.location.reload();
-    });
-  </script>
-</body>
-</html>
+    </script>
+  </body>
+  </html>
