@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 预加载优化 -->
+  <link rel="preload" href="/stats">
+  <!-- 预连接优化 -->
+  <link rel="preconnect" href="/stats">
   <title>API Statistics</title>
   <style>
     :root {
@@ -31,14 +35,18 @@
       padding: 2rem;
       flex: 1;
     }
+/* 标题及下划线 —— 通过设置 inline-block，使下划线仅跟随文字长度 */
     h1 {
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 1rem;
-      font-size: 1.8rem;
-      text-align: center;
-      position: relative;
-    }
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
+            /* 利用左右自动外边距实现居中 */
+            margin-left: auto;
+            margin-right: auto;
+            }
     h1::after {
       content: '';
       display: block;
@@ -104,6 +112,7 @@
       <button id="refresh-btn" class="action-btn">Refresh</button>
       <a href="/stats" id="stats-btn" class="action-btn">Statistics</a>
       <span id="task-status">Refreshing data, please wait...</span>
+      <a href="/result" id="kanban-btn" class="action-btn" target="_blank" rel="noopener noreferrer">Record</a>
     </div>
     <div class="charts-container">
       <!-- 第一行：Req+TTFT 图和 TPOT 图 -->

@@ -49,7 +49,7 @@ def check_api_status(api_config, api_type, model_name):
     client_id = api_config.get("id")  # 使用人工设置的id
     tokens_generated = 0
     req_ttft = 0  # 新增变量：请求到第一个 token 的时间
-    msg = "Please使用以下模板创建一个自我介绍，不要加句号。name填入'迪力木拉提莫尔索'，age填入'18',hobby填入'打羽毛球、英语、法语、编程、旅游':'大家好，我的名字是{name},我来自美国洛杉矶，是一名华人，今年{age}岁，我平日里最大的爱好是{hobby}，我曾经前往新加坡、中国香港等多地旅游，希望在以后的日子里能够与各位和睦相处，我们是相亲相爱的一家人，大家有什么问题可以尽管来问我，我涉猎广泛，可以帮助大家尽一份心力，接下来我要背诵一篇诗文：侍卫之臣不懈于内，忠志之士忘身于外者，盖追先帝之殊遇，欲报之于陛下也。诚宜开张圣听，以光先帝遗德，恢弘志士之气，不宜妄自菲薄，引喻失义，以塞忠谏之路也。宫中府中，俱为一体，陟罚臧否，不宜异同。若有作奸犯科及为忠善者，宜付有司论其刑赏，以昭陛下平明之理，不宜偏私，使内外异法也。"
+    msg = "Please使用以下模板创建一个自我介绍，不要加句号。name填入'迪力木拉提莫尔索'，age填入'18',hobby填入'打羽毛球、英语、法语、编程、旅游':'大家好，我的名字是{name},我来自美国洛杉矶，是一名华人，今年{age}岁，我平日里最大的爱好是{hobby}，我曾经前往新加坡、中国香港等多地旅游，希望在以后的日子里能够与各位和睦相处，我们是相亲相爱的一家人，大家有什么问题可以尽管来问我，我涉猎广泛，可以帮助大家尽一份心力，接下来我要背诵一篇诗文：侍卫之臣不懈于内，忠志之士忘身于外者，盖追先帝之殊遇，欲报之于陛下也。诚宜开张圣听，以光先帝遗德，恢弘志士之气，不宜妄自菲薄，引喻失义，以塞忠谏之路也。宫中府中，俱为一体，陟罚臧否，不宜异同。"
     try:
         # 针对OpenAI-compatible API执行双重请求
         if api_type in ["openai", "openrouter", "deepseek", "kimi", "volcengine", "Siflow", "azure", "Grok", "Qwen","GLM"]:
@@ -160,13 +160,13 @@ def check_api_status(api_config, api_type, model_name):
 
 # 根据响应时间分类
 def categorize_response_time(response_time):
-    if response_time < 5:
+    if response_time < 8.5:
         return "smooth"
     elif response_time <= 35:
         return "available"
     elif response_time <= 50:
         return "congestion"
-    elif response_time <= 100:
+    elif response_time <= 120:
         return "lagging"
     else:
         return "unknown"
@@ -190,7 +190,7 @@ def periodic_check():
     while True:
         initial_check()  # 执行初始化检查
         calculate_availability()
-        time.sleep(60*30)  # 每30分钟运行一次
+        time.sleep(60 * 10)  # 每10分钟运行一次
 # 启动Flask服务，提供结果的接口
 @app.route('/result')
 def result():
@@ -270,12 +270,12 @@ def calculate_availability():
             upsert=True
         )
 
-# 定时任务：每35分钟计算一次
+# 每15分钟计算一次
 def periodic_availability_check():
     while True:
         calculate_availability()
         socketio.emit('refresh_stats', {'message': 'Data refreshed'})
-        time.sleep(35 * 60)
+        time.sleep(15 * 60)
 
 @app.route('/sta')
 def api_statistics():

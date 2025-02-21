@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 预加载优化 -->
+    <link rel="preload" href="/kanban">
+    <!-- 预连接优化 -->
+    <link rel="preconnect" href="/kanban">
     <title>Caiyun API Statistics</title>
     <style>
         :root {
@@ -27,13 +31,17 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             padding: 2rem;
         }
+/* 标题及下划线 —— 通过设置 inline-block，使下划线仅跟随文字长度 */
         h1 {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            font-size: 1.8rem;
-            text-align: center;
-            position: relative;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        font-size: 1.8rem;
+        position: relative;
+        display: inline-block;
+        /* 利用左右自动外边距实现居中 */
+        margin-left: auto;
+        margin-right: auto;
         }
         h1::after {
             content: '';
@@ -150,18 +158,17 @@
 <body>
     <div class="container">
         <h1>API Statistics</h1>
-
-        <!-- Search inputs -->
-        <div style="margin-bottom: 20px;">
-            <input type="text" id="provider-search" placeholder="Search Provider">
-            <input type="text" id="model-search" placeholder="Search Model Name">
-        </div>
-
         <!-- Buttons and status -->
         <div class="controls">
             <button id="refresh-btn" class="action-btn">Refresh</button>
             <span id="task-status">Task submitted, will refresh automatically...</span>
             <a href="/kanban" id="kanban-btn" class="action-btn">Kanban</a>
+            <a href="/result" id="kanban-btn" class="action-btn" target="_blank" rel="noopener noreferrer">Record</a>
+        </div>
+        <!-- Search inputs -->
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="provider-search" placeholder="Search Provider">
+            <input type="text" id="model-search" placeholder="Search Model Name">
         </div>
 
         <table>
