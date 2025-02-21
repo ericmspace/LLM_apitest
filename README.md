@@ -28,8 +28,8 @@ This project is designed to monitor the availability and performance of various 
 - Highcharts Acknowledgment: This project utilizes Highcharts for chart visualization. Due to the use of Highcharts, this project is non-commercial and for educational purposes only.  
   感谢 Highcharts：本项目使用 Highcharts 进行图表可视化。由于使用了 Highcharts，本项目不可商用，仅供学习和交流。
   
-- This project was completed during the author's internship at ColorfulCloud Tech, which coincided with the author's final semester as an undergraduate at Shandong University of Science and Technology. All rights and authorship of the results belong to the author under the internship agreement, and it does not involve any commercial company interests. The author is grateful to the university for allowing the flexibility to complete this internship during this period.  
-  本项目是在作者在彩云科技（ColorfulCloud Tech.）实习期间完成的。根据实习协议，成果的所有权和署名权归作者所有，且不涉及任何商业公司利益。恰逢作者本科在山东科技大学的最后一个学期，感谢学校在这一重要时期给予的充分实践自由。
+- This project was completed during the author's internship at ColorfulCloud Tech, which coincided with the author's final semester as an undergraduate at Shandong University of Science and Technology. All rights and authorship of the results belong to the author under the internship agreement, and it does not involve any commercial company interests. The author is grateful to the College of Mathematics and Systems Science for allowing the flexibility to complete this internship during this period.  
+  本项目是在作者在彩云科技（ColorfulCloud Tech.）实习期间完成的。根据实习协议，成果的所有权和署名权归作者所有，且不涉及任何商业公司利益。恰逢作者本科在山东科技大学的最后一个学期，感谢数学与系统科学学院在这一重要时期给予的充分实践自由。
   
 ## Requirements / 环境要求
 - Python 3.x
