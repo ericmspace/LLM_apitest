@@ -3,7 +3,7 @@
 
 This project is designed to monitor the availability and performance of various LLM (Large Language Model) APIs, such as OpenAI, Anthropic, Azure, and others. The system periodically checks the status of APIs, calculates metrics like response time, throughput, and Req+TTFT (Request + Token Time to First Token), and stores the results in MongoDB. It also provides a web interface to display the latest statistics and data.
 
-此项目旨在监控各种 LLM（大型语言模型）API 的可用性和性能，如 OpenAI、Anthropic、Azure 等。该系统定期检查 API 的状态，计算响应时间、吞吐量和 Req+TTFT（请求 + Token 到首个 Token 的时间）等指标，并将结果存储在 MongoDB 中。它还提供了一个 Web 界面来显示最新的统计数据和信息。
+此项目旨在监控各种 LLM（大型语言模型）API 的可用性和性能，如 OpenAI、Anthropic、Azure 等。该系统定期检查 API 的状态，计算响应时间、吞吐量和TTFT（请求到首个 Token 的时间）等指标，并将结果存储在 MongoDB 中。它还提供了一个 Web 界面来显示最新的统计数据和信息。
 
 ## Features / 功能
 
